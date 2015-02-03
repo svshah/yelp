@@ -8,6 +8,7 @@
 
 #import "FiltersViewController.h"
 #import "SwitchCell.h"
+#include "RadioButtonCell.h"
 
 @interface FiltersViewController () <UITableViewDataSource, UITableViewDelegate, SwitchCellDelegate>
 
@@ -15,7 +16,13 @@
 @property (strong, nonatomic) IBOutlet UITableView *tableView;
 @property (nonatomic, strong) NSArray *categories;
 @property (nonatomic, strong) NSMutableSet *selectedCategories;
+@property (nonatomic, strong) NSArray *sortBy;
+@property (nonatomic, strong) NSNumber *selectedSortBy;
+@property (nonatomic, strong) NSIndexPath *selectedSortByIndex;
+@property (nonatomic, strong) NSArray *distance;
+@property (nonatomic, strong) NSNumber *selectedDistance;
 @property (nonatomic, strong) NSNumber *offeringADeal;
+@property (nonatomic, strong) NSIndexPath *selectedDistanceIndex;
 
 -(void) initCategories;
 
@@ -29,6 +36,10 @@
     if (self) {
         [self initCategories];
         self.selectedCategories = [NSMutableSet set];
+        self.sortBy = [NSArray arrayWithObjects:@"Best Match", @"Distance", @"Most Reviewed", nil];
+        self.selectedSortBy = [NSNumber numberWithInteger:0];
+        self.distance = [NSArray arrayWithObjects:@"Best Match", @"0.3", @"1", @"5", @"20", nil];
+        self.selectedSortBy = [NSNumber numberWithInteger:0];
     }
     
     return self;
@@ -44,6 +55,8 @@
     
     [self.tableView registerNib:[ UINib nibWithNibName:@"SwitchCell" bundle:nil] forCellReuseIdentifier:@"SwitchCell"];
     
+    [self.tableView registerNib:[ UINib nibWithNibName:@"RadioButtonCell" bundle:nil] forCellReuseIdentifier:@"RadioButtonCell"];
+    
 }
 
 - (void)didReceiveMemoryWarning {
@@ -53,16 +66,31 @@
 
 
 - (NSInteger)numberOfSectionsInTableView: (UITableView *) tableView {
-    return 2;
+    return 4;
 }
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section {
     if(section == 0) {
         return 1;
+    } else if (section == 1) {
+        return self.sortBy.count;
+    } else if (section == 2) {
+        return self.distance.count;
     }
     return self.categories.count;
 }
 
+- (NSString *)tableView:(UITableView *)tableView titleForHeaderInSection:(NSInteger)section {
+    if (section == 0) {
+        return @"Most Popular";
+    } else if (section == 1) {
+        return @"Sort By";
+    } else if (section == 2) {
+        return @"Distance";
+    }
+    
+    return @"Categories";
+}
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath {
     
     if (indexPath.section == 0) {
@@ -70,6 +98,20 @@
         cell.titleLabel.text = @"Offering a deal";
         cell.on = [self.offeringADeal boolValue];
         cell.delegate = self;
+        return cell;
+    } else if (indexPath.section == 1) {
+        RadioButtonCell *cell = [tableView dequeueReusableCellWithIdentifier:@"RadioButtonCell"];
+        NSString *sortBy = self.sortBy[indexPath.row];
+        cell.titleLabel.text = sortBy;
+        return cell;
+    } else if (indexPath.section == 2) {
+        RadioButtonCell *cell = [tableView dequeueReusableCellWithIdentifier:@"RadioButtonCell"];
+        NSString *distance = self.distance[indexPath.row];
+        if (indexPath.row == 0) {
+            cell.titleLabel.text = distance ;
+        } else {
+            cell.titleLabel.text = [NSString stringWithFormat:@"%@ miles", distance];
+        }
         return cell;
     }
     
@@ -101,6 +143,44 @@
     }
 }
 
+- (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath {
+    if (indexPath.section == 1) {
+        [self.tableView deselectRowAtIndexPath:indexPath animated:YES];
+        UITableViewCell *cell = [self.tableView cellForRowAtIndexPath:indexPath];
+        
+        if (self.selectedSortByIndex == nil) {
+            self.selectedSortByIndex = indexPath;
+        } else {
+            UITableViewCell *previousCell = [self.tableView cellForRowAtIndexPath:self.selectedSortByIndex];
+            previousCell.accessoryType = UITableViewCellAccessoryNone;
+            self.selectedSortByIndex = indexPath;
+        }
+        
+        cell.accessoryType = UITableViewCellAccessoryCheckmark;
+        self.selectedSortBy = [NSNumber numberWithInteger:indexPath.row];
+    } else if (indexPath.section == 2) {
+        [self.tableView deselectRowAtIndexPath:indexPath animated:YES];
+        UITableViewCell *cell = [self.tableView cellForRowAtIndexPath:indexPath];
+        
+        if (self.selectedDistanceIndex == nil) {
+            self.selectedDistanceIndex = indexPath;
+        } else {
+            UITableViewCell *previousCell = [self.tableView cellForRowAtIndexPath:self.selectedDistanceIndex];
+            previousCell.accessoryType = UITableViewCellAccessoryNone;
+            self.selectedDistanceIndex = indexPath;
+        }
+        
+        cell.accessoryType = UITableViewCellAccessoryCheckmark;
+        
+        if( indexPath.row != 0) {
+        
+            NSNumberFormatter *f = [[NSNumberFormatter alloc] init];
+            f.numberStyle = NSNumberFormatterDecimalStyle;
+            self.selectedDistance = [f numberFromString:self.distance[indexPath.row]];
+        }
+    }
+}
+
 
 #pragma mark - private methods
 
@@ -117,7 +197,13 @@
     }
     
     if([self.offeringADeal boolValue]) {
-        [filters setValue:@YES forKey:@"deals_filter"];
+        [filters setValue:@"true" forKey:@"deals_filter"];
+    }
+    
+    [filters setValue:self.selectedSortBy forKey:@"sort"];
+    
+    if (self.selectedDistanceIndex.row != 0) {
+        [filters setValue:self.selectedDistance forKey:@"radius_filter"];
     }
     
     return filters;

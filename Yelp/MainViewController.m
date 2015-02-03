@@ -17,12 +17,17 @@ NSString * const kYelpConsumerSecret = @"kpVmmnuR2S7_je8UVgUGJ4Pu1AY";
 NSString * const kYelpToken = @"iJDVsWt3eRM81l8mu_I65yL6WcWJjAcu";
 NSString * const kYelpTokenSecret = @"8nmwyXBsaCOYQ6NdxSWBk3eshxs";
 
-@interface MainViewController () <UITableViewDataSource, UITableViewDelegate, FilterViewControllerDelegate>
+@interface MainViewController () <UITableViewDataSource, UITableViewDelegate, FilterViewControllerDelegate, UISearchBarDelegate> {
+    BOOL isSearching;
+}
 
 @property (strong, nonatomic) IBOutlet UITableView *tableView;
 @property (nonatomic, strong) YelpClient *client;
 @property (nonatomic,strong) NSArray *businesses;
 @property (nonatomic, strong) BusinessCell *prototypeCell;
+@property (nonatomic, strong) UISearchBar *searchBar;
+@property (nonatomic, strong) NSString *searchString;
+
 
 - (void) fetchBusinessesWithQuery: (NSString *)query params:(NSDictionary *)params;
 
@@ -36,8 +41,8 @@ NSString * const kYelpTokenSecret = @"8nmwyXBsaCOYQ6NdxSWBk3eshxs";
     if (self) {
         // You can register for Yelp API keys here: http://www.yelp.com/developers/manage_api_keys
         self.client = [[YelpClient alloc] initWithConsumerKey:kYelpConsumerKey consumerSecret:kYelpConsumerSecret accessToken:kYelpToken accessSecret:kYelpTokenSecret];
-        
-        [self fetchBusinessesWithQuery:@"Restaurants" params:nil];
+        self.searchString =@"Restaurants";
+        [self fetchBusinessesWithQuery:self.searchString params:nil];
     }
     return self;
 }
@@ -56,6 +61,10 @@ NSString * const kYelpTokenSecret = @"8nmwyXBsaCOYQ6NdxSWBk3eshxs";
     self.title = @"Yelp";
     
     self.navigationItem.leftBarButtonItem = [[UIBarButtonItem alloc] initWithTitle:@"Filter" style:UIBarButtonItemStylePlain target:self action:@selector(onFilterButton)];
+    self.searchBar = [[UISearchBar alloc] initWithFrame:CGRectZero];
+    [self.searchBar sizeToFit];
+    self.navigationItem.titleView = self.searchBar;
+    self.searchBar.delegate = self;
 }
 
 - (void)didReceiveMemoryWarning
@@ -88,7 +97,21 @@ NSString * const kYelpTokenSecret = @"8nmwyXBsaCOYQ6NdxSWBk3eshxs";
     
     NSLog(@"fire new network event: %@", filters);
     
-    [self fetchBusinessesWithQuery:@"Restaurants" params:filters];
+    [self fetchBusinessesWithQuery:self.searchString params:filters];
+}
+
+#pragma  mark - Search Methods
+
+
+- (void)searchBarCancelButtonClicked:(UISearchBar *)searchBar {
+    NSLog(@"Cancel clicked");
+}
+
+- (void)searchBarSearchButtonClicked:(UISearchBar *)searchBar {
+    NSLog(@"Search Clicked");
+    NSString *searchString = self.searchBar.text;
+    self.searchString = searchString;
+    [self fetchBusinessesWithQuery:self.searchString params:nil];
 }
 
 #pragma mark - Private methods
@@ -102,8 +125,7 @@ NSString * const kYelpTokenSecret = @"8nmwyXBsaCOYQ6NdxSWBk3eshxs";
     
 }
 
-- (BusinessCell *)prototypeCell
-{
+- (BusinessCell *)prototypeCell {
     if (!_prototypeCell)
     {
         _prototypeCell = [self.tableView dequeueReusableCellWithIdentifier:@"BusinessCell"];
