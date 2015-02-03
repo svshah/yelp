@@ -17,17 +17,14 @@ NSString * const kYelpConsumerSecret = @"kpVmmnuR2S7_je8UVgUGJ4Pu1AY";
 NSString * const kYelpToken = @"iJDVsWt3eRM81l8mu_I65yL6WcWJjAcu";
 NSString * const kYelpTokenSecret = @"8nmwyXBsaCOYQ6NdxSWBk3eshxs";
 
-@interface MainViewController () <UITableViewDataSource, UITableViewDelegate, FilterViewControllerDelegate, UISearchBarDelegate> {
-    BOOL isSearching;
-}
+@interface MainViewController () <UITableViewDataSource, UITableViewDelegate, UISearchBarDelegate, FilterViewControllerDelegate>
 
-@property (strong, nonatomic) IBOutlet UITableView *tableView;
+@property (nonatomic, strong) IBOutlet UITableView *tableView;
 @property (nonatomic, strong) YelpClient *client;
-@property (nonatomic,strong) NSArray *businesses;
+@property (nonatomic, strong) NSArray *businesses;
 @property (nonatomic, strong) BusinessCell *prototypeCell;
 @property (nonatomic, strong) UISearchBar *searchBar;
 @property (nonatomic, strong) NSString *searchString;
-
 
 - (void) fetchBusinessesWithQuery: (NSString *)query params:(NSDictionary *)params;
 
@@ -41,7 +38,7 @@ NSString * const kYelpTokenSecret = @"8nmwyXBsaCOYQ6NdxSWBk3eshxs";
     if (self) {
         // You can register for Yelp API keys here: http://www.yelp.com/developers/manage_api_keys
         self.client = [[YelpClient alloc] initWithConsumerKey:kYelpConsumerKey consumerSecret:kYelpConsumerSecret accessToken:kYelpToken accessSecret:kYelpTokenSecret];
-        self.searchString =@"Restaurants";
+        self.searchString = @"Restaurants";
         [self fetchBusinessesWithQuery:self.searchString params:nil];
     }
     return self;
@@ -53,14 +50,10 @@ NSString * const kYelpTokenSecret = @"8nmwyXBsaCOYQ6NdxSWBk3eshxs";
     // Do any additional setup after loading the view from its nib.
     self.tableView.dataSource = self;
     self.tableView.delegate = self;
-    
     [self.tableView registerNib:[UINib nibWithNibName:@"BusinessCell" bundle:nil] forCellReuseIdentifier:@"BusinessCell"];
-    
     self.tableView.rowHeight = UITableViewAutomaticDimension;
-    
-    self.title = @"Yelp";
-    
     self.navigationItem.leftBarButtonItem = [[UIBarButtonItem alloc] initWithTitle:@"Filter" style:UIBarButtonItemStylePlain target:self action:@selector(onFilterButton)];
+    self.navigationItem.leftBarButtonItem.tintColor = [UIColor redColor];
     self.searchBar = [[UISearchBar alloc] initWithFrame:CGRectZero];
     [self.searchBar sizeToFit];
     self.navigationItem.titleView = self.searchBar;

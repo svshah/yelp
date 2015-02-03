@@ -32,6 +32,7 @@ Time spent: `<Number of hours spent>`
 ### Walkthrough
 
 ![Video Walkthrough](...)
+(yelp.git)
 
-
+GIF created with [LiceCap](http://www.cockos.com/licecap/).
 
